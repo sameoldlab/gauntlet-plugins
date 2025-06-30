@@ -1,13 +1,13 @@
 [gauntlet]
-name = 'Template Plugin'
+name = 'Same Old Plugins'
 description = """
-Template Plugin Description
+sameoldlab's Plugin Repo
 """
 
 [[entrypoint]]
 id = 'template-view'
 name = 'Template view'
-path = 'src/template-view.tsx'
+path = 'src/template-view/index.tsx'
 type = 'view'
 description = """
 Template Plugin Entrypoint Description
