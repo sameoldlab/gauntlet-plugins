@@ -12,3 +12,9 @@ type = 'view'
 description = """
 Template Plugin Entrypoint Description
 """
+
+[permissions.exec]
+command = ["pop-launcher"]
+
+[[supported_system]]
+os = 'linux'
