@@ -1,8 +1,15 @@
+# schema = "https://raw.githubusercontent.com/project-gauntlet/gauntlet/refs/heads/main/docs/schema/plugin_manifest.schema.json"
+
 [gauntlet]
 name = 'Same Old Plugins'
 description = """
 sameoldlab's Plugin Repo
 """
+
+# [[authors.sameoldlab]]
+# name = "sameoldlab"
+# uris = ["https://gtihub.com/sameoldlab"]
+
 
 [[entrypoint]]
 id = 'template-view'
