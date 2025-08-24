@@ -11,8 +11,18 @@ path = 'src/windows.tsx'
 type = 'view'
 description = 'Wayland window tracking'
 
+[[entrypoint]]
+id = 'find'
+name = 'Find'
+path = 'src/find.tsx'
+type = 'view'
+description = 'Search files'
+
 [permissions.exec]
 command = ["pop-launcher", "wlrctl"]
+
+[permissions.filesystem]
+read = ["/"]
 
 [[supported_system]]
 os = 'linux'
