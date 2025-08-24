@@ -2,24 +2,17 @@
 
 [gauntlet]
 name = 'Same Old Plugins'
-description = """
-sameoldlab's Plugin Repo
-"""
-
-# [[authors.sameoldlab]]
-# name = "sameoldlab"
-# uris = ["https://gtihub.com/sameoldlab"]
-
+description = "sameoldlab's Plugin Repo"
 
 [[entrypoint]]
-type = 'view'
 id = 'windows'
 name = 'Windows'
 path = 'src/windows.tsx'
+type = 'view'
 description = 'Wayland window tracking'
 
 [permissions.exec]
-command = ["pop-launcher"]
+command = ["pop-launcher", "wlrctl"]
 
 [[supported_system]]
 os = 'linux'
