@@ -12,13 +12,11 @@ sameoldlab's Plugin Repo
 
 
 [[entrypoint]]
-id = 'template-view'
-name = 'Template view'
-path = 'src/template-view/index.tsx'
 type = 'view'
-description = """
-Template Plugin Entrypoint Description
-"""
+id = 'windows'
+name = 'Windows'
+path = 'src/windows.tsx'
+description = 'Wayland window tracking'
 
 [permissions.exec]
 command = ["pop-launcher"]
