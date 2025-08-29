@@ -14,12 +14,12 @@ description = 'Wayland window tracking'
 [[entrypoint]]
 id = 'find'
 name = 'Find'
-path = 'src/find.tsx'
+path = 'src/fuzzy-find.tsx'
 type = 'view'
 description = 'Search files'
 
 [permissions.exec]
-command = ["pop-launcher", "wlrctl"]
+command = ["pop-launcher", "wlrctl","file", "xdg-open", "goldfish"]
 
 [permissions.filesystem]
 read = ["/"]
