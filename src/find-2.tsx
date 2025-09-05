@@ -1,11 +1,14 @@
-import { ReactElement, useMemo, useState, useCallback } from "react";
-import { Action, ActionPanel, Detail, Icons, List, TextAccessory } from "@project-gauntlet/api/components";
+import { ReactElement, useMemo, useState } from "react";
+import { Action, ActionPanel, Icons, List } from "@project-gauntlet/api/components";
+import { Clipboard } from "@project-gauntlet/api/helpers"
+import { open } from "./script/open"
 
 interface File {
   id: number;
   path: string;
   name: string;
   mime?: string;
+  data: null | ArrayBuffer | string
 }
 
 const MIME = (mime: string): keyof typeof Icons => {
@@ -18,46 +21,29 @@ const MIME = (mime: string): keyof typeof Icons => {
   if (mime.includes('audio')) return "Music"
   if (mime.includes('application')) return "Code"
   if (mime.includes('html')) return "Code"
-  if (mime.includes('x-rust')) return "Code"
   if (mime.includes('text')) return "Text"
   return "Document"
 }
 
 // Get MIME type using file command
 function getMimeType(filePath: string) {
-  try {
-    const command = new Deno.Command("file", {
-      args: ["--mime-type", "-b", filePath],
-      stdout: "piped",
-      stderr: "piped"
-    });
-
-    const output = command.outputSync();
-    if (output.code === 0) {
-      return new TextDecoder().decode(output.stdout).trim();
-    }
-  } catch {
-    // Fallback to basic detection
+  const output = new Deno.Command("file", {
+    args: ["--mime-type", "-b", filePath],
+    stdout: "piped",
+  }).outputSync();
+  if (output.code === 0) {
+    return new TextDecoder().decode(output.stdout).trim();
   }
-
-  const ext = filePath.split('.').pop()?.toLowerCase();
-  if (ext === 'rs') return 'text/x-rust';
-  if (['js', 'ts', 'jsx', 'tsx'].includes(ext || '')) return 'application/javascript';
-  if (['png', 'jpg', 'jpeg', 'gif'].includes(ext || '')) return 'image/' + ext;
-  if (['mp4', 'avi', 'mkv'].includes(ext || '')) return 'video/' + ext;
-  if (['mp3', 'wav', 'flac'].includes(ext || '')) return 'audio/' + ext;
 
   return 'text/plain';
 }
 
 function Finder() {
-  const process = new Deno.Command("goldfish", {
+  const process = new Deno.Command("gf", {
     stdin: "piped",
     stderr: "null",
     stdout: "piped"
   }).spawn()
-
-
 
   try {
     if (!process.stdin || !process.stdout) {
@@ -69,43 +55,36 @@ function Finder() {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
-    const search = (query: string) => {
-      writer.write(encoder.encode(`q:${query}\n`))
-      console.log("encoded query")
-    }
-
     const exit = () => writer.write(encoder.encode(`c:Exit`))
 
-    const read = async (): Promise<File[]> => {
+    const search = async (query: string): Promise<File[]> => {
+
+      writer.write(encoder.encode(`q:${query}\n`))
       const res = await reader.read();
       const [len, ...lines] = decoder.decode(res.value).split('\n').filter(line => line.trim());
       return Promise.all(lines
         .map(async (path, id) => {
           const name = path.split('/').pop() || path;
           const mime = getMimeType(path);
-          return { id, path, name, mime }
+          return { id, path, name, mime, data: null }
         }));
     }
 
-    return { search, exit, read }
+    return { search, exit }
 
   } catch (error) {
     throw new Error(`Failed to spawn fuzzy-fd: ${error}`);
   }
 }
-const { search, exit, read } = Finder()
+const finder = Finder()
 
-// Open file with default application
-function openFile(filePath: string) {
-  try {
-    return new Deno.Command("xdg-open", {
-      args: [filePath],
-      stdout: "piped",
-      stderr: "piped"
-    }).output();
-
-  } catch (error) {
-    console.error("Failed to open file:", error);
+const readData = (file: File) => {
+  if (file.mime?.startsWith("image")) {
+    let data = Deno.readFileSync(file.path)
+    file.data = data.buffer
+  } else if (file.mime?.startsWith("text")) {
+    let data = Deno.readTextFileSync(file.path)
+    file.data = data
   }
 }
 
@@ -119,32 +98,58 @@ export default function(): ReactElement {
     if (typeof selectedFile != 'number') return undefined;
     if (results.length === 0) return undefined
 
-    const { path, name, mime } = results[selectedFile]!
-    const fileinfo = Deno.lstatSync(path)
-    try {
-      return {
-        ...fileinfo,
-        path,
-        name,
-        mime
-      };
-    } catch {
-      return undefined;
-    }
+    const file = results[selectedFile]!
+    if (!file.data) readData(file)
+    const fileinfo = Deno.lstatSync(file.path)
+
+    return {
+      ...fileinfo,
+      f: file,
+    };
   }, [selectedFile, results]);
 
   return (
     <List
-      onItemFocusChange={id => setSelectedFile(id !== undefined ? parseInt(id) : undefined)}
+      onItemFocusChange={id => setSelectedFile((id && parseInt(id)) || 0)}
       actions={
         <ActionPanel>
           <Action
-            label="Open File"
-            onAction={(path) => path && openFile(path)}
+            id="open"
+            label="Open"
+            onAction={(id) => id && open(results[parseInt(id)].path)}
           />
           <Action
+            id="reveal"
+            label="Show in explorer"
+            onAction={(id) => {
+              if (!id) return
+              const file = results[parseInt(id)]
+              let path = file.path
+              if (file.mime && file.mime !== 'inode/directory') {
+                const idx = path.lastIndexOf(Deno.build.os === 'windows' ? '\\' : '/')
+                path = path.slice(0, idx + 1)
+              }
+              open(path)
+            }}
+          />
+          <Action
+            id="copyFile"
+            label="Copy File"
+            onAction={async (id) => {
+              if (!id) return
+              let file = results[parseInt(id)]
+              if (!file.data) readData(file)
+              if (file.mime?.startsWith("text")) {
+                Clipboard.write({ "text/plain": file.data as string })
+              } else {
+                Clipboard.write({ "image/png": file.data as ArrayBuffer })
+              }
+            }}
+          />
+          <Action
+            id="copyPath"
             label="Copy Path"
-            onAction={(path) => path && navigator.clipboard?.writeText(path)}
+            onAction={(id) => id && Clipboard.writeText(results[parseInt(id)].path)}
           />
         </ActionPanel>
       }
@@ -153,43 +158,36 @@ export default function(): ReactElement {
         value={searchText}
         onChange={async (query = "") => {
           setSearchText(query)
-          if (query.trim().length == 0) return setResults([])
-          search(query)
-
-          read().then(results => {
-            setResults(results);
-            // setSelectedFile(0)
-          })
+          finder.search(query).then(setResults)
         }}
         placeholder="Search files"
       />
 
-      {results.map((file) => (
+      {results.map((file, i) => (
         <List.Item
-          key={file.path}
+          key={i}
           id={file.id.toString()}
           title={file.name}
           icon={Icons[MIME(file.mime ?? '')]}
-        // accessories={[
-        //   file.mime && <TextAccessory text={file.mime.split('/')[0]} />
-        // ]}
         />
       ))}
 
       {details && (
         <List.Detail>
           <List.Detail.Metadata>
-            <List.Detail.Metadata.Value label="Path">
-              {details.path}
-            </List.Detail.Metadata.Value>
             <List.Detail.Metadata.Value label="Name">
-              {details.name}
+              {details.f.name}
             </List.Detail.Metadata.Value>
-            <List.Detail.Metadata.Value label="MIME Type">
-              {details.mime || 'Unknown'}
+            <List.Detail.Metadata.Value label="Path">
+              {details.f.path}
             </List.Detail.Metadata.Value>
+            {details.f.mime != "inode/directory" && (
+              <List.Detail.Metadata.Value label="Type">
+                {details.f.mime || 'Unknown'}
+              </List.Detail.Metadata.Value>
+            )}
             <List.Detail.Metadata.Value label="Size">
-              {formatFileSize(details.size)}
+              {fmtSize(details.size)}
             </List.Detail.Metadata.Value>
             <List.Detail.Metadata.Value label="Modified">
               {details.mtime?.toLocaleString() || 'Unknown'}
@@ -198,18 +196,26 @@ export default function(): ReactElement {
               {details.birthtime?.toLocaleString() || 'Unknown'}
             </List.Detail.Metadata.Value>
             <List.Detail.Metadata.Value label="Permissions">
-              {formatPermissions(details.mode)}
+              {fmtPerms(details.mode)}
             </List.Detail.Metadata.Value>
           </List.Detail.Metadata>
+          {details.f.data && (
+            <List.Detail.Content>
+              {details.f.mime?.startsWith('text') && (
+                <List.Detail.Content.Paragraph>
+                  {details.f.data as string}
+                </List.Detail.Content.Paragraph>)}
+            </List.Detail.Content>
+          )}
 
         </List.Detail>
-      )}
-    </List>
+      )
+      }
+    </List >
   );
 }
 
-// Utility functions
-function formatFileSize(bytes: number): string {
+function fmtSize(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   let size = bytes;
   let unitIndex = 0;
@@ -222,19 +228,18 @@ function formatFileSize(bytes: number): string {
   return `${size.toFixed(1)} ${units[unitIndex]}`;
 }
 
-function formatPermissions(mode: number | null): string {
+function fmtPerms(mode: number | null): string {
   if (mode === null) return 'Unknown';
 
-  const permissions = [];
   const owner = (mode >> 6) & 7;
   const group = (mode >> 3) & 7;
   const other = mode & 7;
 
-  const formatTriad = (n: number) => {
+  const fmtTriad = (n: number) => {
     return ((n & 4) ? 'r' : '-') +
       ((n & 2) ? 'w' : '-') +
       ((n & 1) ? 'x' : '-');
   };
 
-  return formatTriad(owner) + formatTriad(group) + formatTriad(other);
+  return fmtTriad(owner) + fmtTriad(group) + fmtTriad(other);
 }
