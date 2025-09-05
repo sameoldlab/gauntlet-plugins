@@ -2,6 +2,7 @@ import { ReactElement, useMemo, useState } from "react";
 import { Action, ActionPanel, Icons, List } from "@project-gauntlet/api/components";
 import { Clipboard } from "@project-gauntlet/api/helpers"
 import { open } from "./script/open"
+import { getMimeTypeSync } from "./script/file";
 
 interface File {
   id: number;
@@ -12,8 +13,6 @@ interface File {
 }
 
 const MIME = (mime: string): keyof typeof Icons => {
-  // const mime = getMimeType(path)
-
   if (!mime) return 'Document'
   if (mime.includes('image')) return "Image"
   if (mime.includes('directory')) return "Folder"
@@ -23,19 +22,6 @@ const MIME = (mime: string): keyof typeof Icons => {
   if (mime.includes('html')) return "Code"
   if (mime.includes('text')) return "Text"
   return "Document"
-}
-
-// Get MIME type using file command
-function getMimeType(filePath: string) {
-  const output = new Deno.Command("file", {
-    args: ["--mime-type", "-b", filePath],
-    stdout: "piped",
-  }).outputSync();
-  if (output.code === 0) {
-    return new TextDecoder().decode(output.stdout).trim();
-  }
-
-  return 'text/plain';
 }
 
 function Finder() {
@@ -65,7 +51,7 @@ function Finder() {
       return Promise.all(lines
         .map(async (path, id) => {
           const name = path.split('/').pop() || path;
-          const mime = getMimeType(path);
+          const mime = getMimeTypeSync(path);
           return { id, path, name, mime, data: null }
         }));
     }
