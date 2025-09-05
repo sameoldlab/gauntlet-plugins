@@ -14,7 +14,7 @@ description = 'Wayland window tracking'
 [[entrypoint]]
 id = 'find'
 name = 'Find'
-path = 'src/fuzzy-find.tsx'
+path = 'src/find.tsx'
 type = 'view'
 description = 'Search files'
 
