@@ -2,9 +2,10 @@ import { ReactElement, useState } from "react";
 import { List, TextAccessory } from "@project-gauntlet/api/components";
 import { PopLauncherClient, SearchResult } from "./script/pop-launcher";
 
+const pop = new PopLauncherClient()
+pop.connect();
+
 export default function(): ReactElement {
-  const pop = new PopLauncherClient()
-  pop.connect();
   const [searchText, setSearchText] = useState<string | undefined>("");
   const [results, setResults] = useState<SearchResult[]>([])
 
