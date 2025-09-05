@@ -18,8 +18,36 @@ path = 'src/find.tsx'
 type = 'view'
 description = 'Search files'
 
+[[entrypoint.actions]]
+id = 'copyFile'
+description = 'Copy file content'
+shortcut = { key = 'y', kind = 'alternative' }
+
+[[entrypoint.actions]]
+id = 'copyPath'
+description = 'Copy filepath'
+shortcut = { key = 'p', kind = 'alternative' }
+
+[[entrypoint]]
+id = 'files'
+name = 'Files'
+path = 'src/files.tsx'
+type = 'view'
+description = 'Navigate files'
+
+[permissions]
+clipboard = ["write"]
+
 [permissions.exec]
-command = ["pop-launcher", "wlrctl","file", "xdg-open", "goldfish"]
+command = [
+  "pop-launcher",
+  "wlrctl",
+  "file",
+  "xdg-open",
+  "explorer",
+  "open",
+  "gf",
+]
 
 [permissions.filesystem]
 read = ["/"]
