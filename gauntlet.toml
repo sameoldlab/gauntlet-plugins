@@ -1,0 +1,56 @@
+# schema = "https://raw.githubusercontent.com/project-gauntlet/gauntlet/refs/heads/main/docs/schema/plugin_manifest.schema.json"
+
+[gauntlet]
+name = 'same old plugins'
+description = "sameoldlab's Plugin Repo"
+
+[[entrypoint]]
+id = 'windows'
+name = 'Windows'
+path = 'src/windows.tsx'
+type = 'view'
+description = 'Wayland window tracking'
+
+[[entrypoint]]
+id = 'find'
+name = 'Find'
+path = 'src/find.tsx'
+type = 'view'
+description = 'Search files'
+
+[[entrypoint.actions]]
+id = 'copyFile'
+description = 'Copy file content'
+shortcut = { key = 'y', kind = 'alternative' }
+
+[[entrypoint.actions]]
+id = 'copyPath'
+description = 'Copy filepath'
+shortcut = { key = 'p', kind = 'alternative' }
+
+[[entrypoint]]
+id = 'files'
+name = 'Files'
+path = 'src/files.tsx'
+type = 'view'
+description = 'Navigate files'
+
+[permissions]
+clipboard = ["write"]
+
+[permissions.exec]
+command = [
+  "pop-launcher",
+  "wlrctl",
+  "file",
+  "xdg-open",
+  "explorer",
+  "open",
+  "gf",
+]
+
+[permissions.filesystem]
+read = ["/"]
+
+[[supported_system]]
+os = 'linux'
