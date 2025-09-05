@@ -11,7 +11,6 @@ export default function(): ReactElement {
   }).output().then((cmd) => {
     if (!cmd.success) {
       let err = dec.decode(cmd.stderr)
-      console.log(err)
       return
     }
 

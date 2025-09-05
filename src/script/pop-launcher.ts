@@ -54,7 +54,7 @@ export class PopLauncherClient {
       this.writer = this.process.stdin.getWriter();
       this.reader = this.process.stdout.getReader();
 
-      console.log("Connected to pop-launcher");
+      // console.log("Connected to pop-launcher");
     } catch (error) {
       throw new Error(`Failed to spawn pop-launcher: ${error}`);
     }
@@ -70,7 +70,7 @@ export class PopLauncherClient {
 
     try {
       await this.writer.write(data);
-      console.log("Sent:", jsonString);
+      // console.log("Sent:", jsonString);
     } catch (error) {
       throw new Error(`Failed to send request: ${error}`);
     }
@@ -94,14 +94,14 @@ export class PopLauncherClient {
       for (const line of lines) {
         try {
           const response = JSON.parse(line) as PopLauncherResponse;
-          console.log("Received:", JSON.stringify(response, null, 2));
+          // console.log("Received:", JSON.stringify(response, null, 2));
           return response;
         } catch (parseError) {
-          console.warn("Failed to parse response:", line);
+          // console.warn("Failed to parse response:", line);
         }
       }
     } catch (error) {
-      console.error("Error reading response:", error);
+      // console.error("Error reading response:", error);
     }
 
     return null;
@@ -141,9 +141,9 @@ export class PopLauncherClient {
         this.process = null;
       }
 
-      console.log("Disconnected from pop-launcher");
+      // console.log("Disconnected from pop-launcher");
     } catch (error) {
-      console.error("Error during cleanup:", error);
+      // console.error("Error during cleanup:", error);
     }
   }
 }

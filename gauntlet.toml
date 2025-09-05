@@ -1,7 +1,7 @@
 # schema = "https://raw.githubusercontent.com/project-gauntlet/gauntlet/refs/heads/main/docs/schema/plugin_manifest.schema.json"
 
 [gauntlet]
-name = 'Same Old Plugins'
+name = 'same old plugins'
 description = "sameoldlab's Plugin Repo"
 
 [[entrypoint]]

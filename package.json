@@ -1,5 +1,6 @@
 {
   "name": "plugin-template",
+  "version": "0.1.0",
   "scripts": {
     "publish": "gauntlet publish",
     "build": "gauntlet build",
