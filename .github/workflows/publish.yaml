@@ -17,5 +17,5 @@ jobs:
       - run: git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
       - run: git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
       - run: pnpm i
-      - run: pnpm publish
+      - run: pnpm run publish
 
